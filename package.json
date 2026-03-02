@@ -1,0 +1,46 @@
+{
+  "name": "koishi-plugin-mc-sync-bridge",
+  "description": "QQ与Minecraft服务器消息同步插件，基于鹊桥实现双向消息转发",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "Your Name <your-email@example.com>",
+  "homepage": "https://github.com/your-username/koishi-plugin-mc-sync-bridge",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/koishi-plugin-mc-sync-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/koishi-plugin-mc-sync-bridge/issues"
+  },
+  "keywords": [
+    "chatbot",
+    "koishi",
+    "plugin",
+    "minecraft",
+    "qq",
+    "bridge",
+    "websocket",
+    "鹊桥"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w"
+  },
+  "peerDependencies": {
+    "koishi": "^4.18.7"
+  },
+  "dependencies": {
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/ws": "^8.5.0",
+    "typescript": "^5.0.0"
+  }
+}
