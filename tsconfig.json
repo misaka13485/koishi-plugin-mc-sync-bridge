@@ -2,15 +2,15 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "lib",
-    "target": "es2022",
-    "module": "esnext",
+    "target": "es2020",
+    "module": "commonjs",
     "declaration": true,
     "emitDeclarationOnly": false,
     "composite": true,
     "incremental": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "jsx": "react-jsx",
     "jsxImportSource": "@satorijs/element",
     "types": [

@@ -33,6 +33,11 @@ export interface Config {
     admins: string[];
     reconnectInterval: number;
     debug: boolean;
+    motd?: {
+        enabled: boolean;
+        host: string;
+        port: number;
+    };
 }
 export declare const Config: Schema<Config>;
 export declare function apply(ctx: Context, config: Config): void;

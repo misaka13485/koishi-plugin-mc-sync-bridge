@@ -4,6 +4,7 @@ import * as mcToQqHandler from './handlers/mcToQq'
 import * as rconCommand from './commands/rcon'
 import * as restartCommand from './commands/restart'
 import * as listCommand from './commands/list'
+import * as statusCommand from './commands/status'
 
 // 扩展事件类型（简化，不再需要 serverId）
 declare module 'koishi' {
@@ -46,6 +47,12 @@ export interface Config {
   admins: string[]
   reconnectInterval: number
   debug: boolean
+  // MOTD查询配置
+  motd?: {
+    enabled: boolean
+    host: string
+    port: number
+  }
 }
 
 // ========== Schema 定义 ==========
@@ -85,6 +92,15 @@ export const Config: Schema<Config> = Schema.object({
     .default([]),
   reconnectInterval: Schema.number().description('重连间隔(ms)').default(30000),
   debug: Schema.boolean().description('输出调试日志').default(false),
+  motd: Schema.object({
+    enabled: Schema.boolean().description('启用MOTD查询').default(false),
+    host: Schema.string().description('Minecraft服务器地址').default('localhost'),
+    port: Schema.number().description('Minecraft服务器端口').default(25565),
+  }).description('MOTD查询配置').default({
+    enabled: false,
+    host: 'localhost',
+    port: 25565,
+  }),
 })
 
 // ========== 插件入口 ==========
@@ -101,6 +117,7 @@ export function apply(ctx: Context, config: Config) {
   rconCommand.apply(ctx, config, connection, logger)
   restartCommand.apply(ctx, config, connection, logger)
   listCommand.apply(ctx, config, connection, logger)
+  statusCommand.apply(ctx, config, connection, logger)
 
   // QQ → MC 消息转发
   ctx.on('message', (session) => {

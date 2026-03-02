@@ -2,6 +2,7 @@ import { Context } from 'koishi'
 import WebSocket from 'ws'
 import { Config } from './index'
 import { formatGroupIdForBroadcast } from './utils/helpers'
+import { MOTDQuery, ServerStatus } from './utils/motd'
 
 /**
  * Minecraft 服务器连接管理器
@@ -17,6 +18,8 @@ export class ServerConnection {
   private hasConnectedOnce: boolean = false
   private _disconnecting: boolean = false
   private _destroyed: boolean = false
+  private motdQuery: MOTDQuery
+  private lastMotdStatus: ServerStatus | null = null
 
   private _connectWait: { resolve: () => void; reject: (reason?: any) => void } | null = null
   private _connectWaitTimer: NodeJS.Timeout | null = null
@@ -31,6 +34,7 @@ export class ServerConnection {
     this.ctx = ctx
     this.config = config
     this.debug = debug
+    this.motdQuery = new MOTDQuery(ctx.logger('mc-bridge'))
   }
 
 
@@ -110,9 +114,15 @@ export class ServerConnection {
       this.ctx.logger('mc-bridge').warn(`[${this.config.name}] 连接关闭: ${code} ${reason}`)
       this.ws = null
 
-      // 如果不是主动断开，且之前曾连接成功，则发送断开通知
+      // 如果不是主动断开，且之前曾连接成功
       if (!this._disconnecting && this.hasConnectedOnce) {
-        this.notifyGroups(`❌ 服务器 ${this.config.name} 连接断开`)
+        // 如果启用了MOTD查询，立即检查一次服务器状态
+        if (this.config.motd?.enabled) {
+          this.checkServerStatusOnce()
+        } else {
+          // 未启用MOTD查询，直接发送断开通知
+          this.notifyGroups(`❌ 服务器 ${this.config.name} 连接断开`)
+        }
       }
 
       this.scheduleReconnect()
@@ -397,5 +407,79 @@ export class ServerConnection {
       this._connectWaitTimer = null
     }
     this._connectWait = null
+  }
+
+  // ========== MOTD查询相关方法 ==========
+
+  /**
+   * 检查服务器状态（一次性检查）
+   * 在WebSocket断开连接时调用，用于判断服务器是否真的宕机
+   */
+  private async checkServerStatusOnce() {
+    if (!this.config.motd?.enabled || this._destroyed) return
+    
+    this.ctx.logger('mc-bridge').info(`[${this.config.name}] 检查服务器状态...`)
+    
+    try {
+      // 使用3秒超时时间查询服务器状态
+      const { host, port } = this.config.motd
+      const status = await this.motdQuery.query(host, port, 3000)
+      this.lastMotdStatus = status
+      
+      if (status.online) {
+        // 服务器在线，但WebSocket未连接
+        this.ctx.logger('mc-bridge').info(`[${this.config.name}] 服务器在线但鹊桥未连接，等待重连...`)
+        // 不发送通知，等待WebSocket重连
+      } else {
+        // 服务器离线
+        this.ctx.logger('mc-bridge').warn(`[${this.config.name}] 服务器可能已宕机: ${status.error || '无法连接'}`)
+        this.notifyGroups(`💥 服务器 ${this.config.name} 可能已宕机: ${status.error || '无法连接'}`)
+      }
+      
+    } catch (error) {
+      this.ctx.logger('mc-bridge').error(`[${this.config.name}] MOTD查询失败: ${error.message}`)
+      // MOTD查询失败也视为服务器离线
+      this.notifyGroups(`💥 服务器 ${this.config.name} 可能已宕机: ${error.message}`)
+    }
+  }
+
+  /**
+   * 查询服务器MOTD状态
+   * 用于命令查询
+   */
+  async queryMotdStatus(): Promise<ServerStatus> {
+    if (!this.config.motd?.enabled) {
+      throw new Error('MOTD查询未启用')
+    }
+    
+    const { host, port } = this.config.motd
+    // 使用3秒超时时间查询服务器状态
+    return await this.motdQuery.query(host, port, 3000)
+  }
+
+  /**
+   * 获取鹊桥连接状态
+   */
+  getWebSocketStatus(): 'connected' | 'disconnected' | 'connecting' | 'destroyed' {
+    if (this._destroyed) return 'destroyed'
+    if (!this.ws) return 'disconnected'
+    
+    switch (this.ws.readyState) {
+      case WebSocket.OPEN:
+        return 'connected'
+      case WebSocket.CONNECTING:
+        return 'connecting'
+      case WebSocket.CLOSING:
+      case WebSocket.CLOSED:
+      default:
+        return 'disconnected'
+    }
+  }
+
+  /**
+   * 获取最后已知的MOTD状态
+   */
+  getLastMotdStatus(): ServerStatus | null {
+    return this.lastMotdStatus
   }
 }

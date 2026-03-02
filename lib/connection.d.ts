@@ -1,5 +1,6 @@
 import { Context } from 'koishi';
 import { Config } from './index';
+import { ServerStatus } from './utils/motd';
 /**
  * Minecraft 服务器连接管理器
  * 负责与 Minecraft 服务器的 WebSocket 连接管理、消息收发和重连逻辑
@@ -14,6 +15,8 @@ export declare class ServerConnection {
     private hasConnectedOnce;
     private _disconnecting;
     private _destroyed;
+    private motdQuery;
+    private lastMotdStatus;
     private _connectWait;
     private _connectWaitTimer;
     /**
@@ -90,4 +93,22 @@ export declare class ServerConnection {
      * 在连接成功或失败时调用
      */
     private _cleanupConnectWait;
+    /**
+     * 检查服务器状态（一次性检查）
+     * 在WebSocket断开连接时调用，用于判断服务器是否真的宕机
+     */
+    private checkServerStatusOnce;
+    /**
+     * 查询服务器MOTD状态
+     * 用于命令查询
+     */
+    queryMotdStatus(): Promise<ServerStatus>;
+    /**
+     * 获取鹊桥连接状态
+     */
+    getWebSocketStatus(): 'connected' | 'disconnected' | 'connecting' | 'destroyed';
+    /**
+     * 获取最后已知的MOTD状态
+     */
+    getLastMotdStatus(): ServerStatus | null;
 }
