@@ -42,7 +42,7 @@ plugins:
     
     # 可选配置
     wsToken: "your-token"        # 认证令牌（可选）
-    groups: ["922210161"]        # 绑定的QQ群号
+    groups: ["QQ群"]        # 绑定的QQ群号
     admins: ["123456789"]        # 管理员QQ号
     reconnectInterval: 30000     # 重连间隔(ms)
     debug: false                 # 调试模式
@@ -76,7 +76,7 @@ plugins:
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `wsToken` | string | `""` | 认证令牌(Bearer) |
-| `groups` | string[] | `[]` | 绑定的QQ群号，支持格式：`922210161` 或 `onebot:922210161` |
+| `groups` | string[] | `[]` | 绑定的QQ群号|
 | `admins` | string[] | `[]` | 管理员QQ号，支持同上格式 |
 | `reconnectInterval` | number | `30000` | 重连间隔(毫秒) |
 | `debug` | boolean | `false` | 启用调试日志 |
