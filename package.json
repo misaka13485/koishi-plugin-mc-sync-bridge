@@ -8,15 +8,14 @@
     "lib",
     "dist"
   ],
-  "license": "MIT",
-  "author": "Your Name <your-email@example.com>",
-  "homepage": "https://github.com/your-username/koishi-plugin-mc-sync-bridge",
+  "author": "Misaka13485 <1458753169@qq.com>",
+  "homepage": "https://github.com/Misaka13485/koishi-plugin-mc-sync-bridge",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-username/koishi-plugin-mc-sync-bridge.git"
+    "url": "git+https://github.com/Misaka13485/koishi-plugin-mc-sync-bridge.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/koishi-plugin-mc-sync-bridge/issues"
+    "url": "https://github.com/Misaka13485/koishi-plugin-mc-sync-bridge/issues"
   },
   "keywords": [
     "chatbot",
