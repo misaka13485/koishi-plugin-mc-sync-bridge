@@ -44,16 +44,18 @@ export function apply(
     if (!eventAllowed) return
 
     // 聊天消息前缀过滤
+    let matchedPrefix = ''
     if (msg.post_type === 'message' && msg.event_name === 'PlayerChatEvent') {
       const content = msg.message || msg.raw_message || ''
       if (filter.prefixes && filter.prefixes.length > 0) {
-        const matches = filter.prefixes.some(prefix => content.startsWith(prefix))
-        if (!matches) return
+        // 查找匹配的前缀
+        matchedPrefix = filter.prefixes.find(prefix => content.startsWith(prefix)) || ''
+        if (!matchedPrefix) return
       }
     }
 
-    // 格式化为可读文本
-    const text = formatMessage(config.name, msg, logger, config.debug)
+    // 格式化为可读文本，传入匹配的前缀用于去除
+    const text = formatMessage(config.name, msg, logger, config.debug, matchedPrefix)
     if (!text) return
 
     // 调试输出最终消息
@@ -75,13 +77,15 @@ export function apply(
  * @param msg 鹊桥消息对象
  * @param logger 日志记录器
  * @param debug 是否调试模式
+ * @param matchedPrefix 匹配的前缀（如果有），将在聊天消息中去除
  * @returns 格式化后的字符串，null 表示忽略
  */
 function formatMessage(
   serverName: string,
   msg: any,
   logger: Logger,
-  debug: boolean
+  debug: boolean,
+  matchedPrefix: string = ''
 ): string | null {
   const prefix = `[${serverName}]`
 
@@ -142,7 +146,11 @@ function formatMessage(
 
     switch (msg.event_name) {
       case 'PlayerChatEvent': {
-        const chatContent = msg.message || msg.raw_message || ''
+        let chatContent = msg.message || msg.raw_message || ''
+        // 如果匹配了前缀，去除前缀
+        if (matchedPrefix && chatContent.startsWith(matchedPrefix)) {
+          chatContent = chatContent.slice(matchedPrefix.length).trimStart()
+        }
         // 确保包含玩家名
         return `${prefix} ${playerName}: ${chatContent}`
       }

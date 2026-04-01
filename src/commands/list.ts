@@ -51,10 +51,10 @@ export function apply(
             if (config.debug) {
               logger.debug(`[${config.name}] list命令返回未匹配: ${rconResult}`)
             }
-            resultMessage += `📋 在线状态:\n${rconResult}\n`
+            resultMessage += `在线状态:\n${rconResult}\n`
           }
         } else {
-          resultMessage += `❌ 获取玩家列表失败\n`
+          resultMessage += `获取玩家列表失败\n`
         }
         
         // 处理TPS结果
@@ -65,20 +65,20 @@ export function apply(
           const tpsInfo = parseTPSOutput(tpsOutput, logger, config)
           
           if (tpsInfo) {
-            resultMessage += `\n📊 性能指标:\n`
-            resultMessage += `⚡ TPS: ${tpsInfo.tps}\n`
-            resultMessage += `⏱️  MSPT: ${tpsInfo.mspt}\n`
+            resultMessage += `\n性能指标:\n`
+            resultMessage += `TPS: ${tpsInfo.tps} `
+            resultMessage += `MSPT: ${tpsInfo.mspt}\n`
             
             // 添加性能状态指示
             const tpsNum = parseFloat(tpsInfo.tps)
           } else {
-            resultMessage += `\n📊 性能指标: 解析失败\n`
+            resultMessage += `\n性能指标: 解析失败\n`
             if (config.debug) {
               logger.debug(`[${config.name}] TPS命令返回: ${tpsOutput}`)
             }
           }
         } else {
-          resultMessage += `\n📊 性能指标: 获取失败\n`
+          resultMessage += `\n性能指标: 获取失败\n`
           if (config.debug) {
             logger.debug(`[${config.name}] TPS命令失败: ${tpsResult.reason}`)
           }

@@ -15,6 +15,7 @@ export declare class ServerConnection {
     private hasConnectedOnce;
     private _disconnecting;
     private _destroyed;
+    private _disconnectedNotified;
     private motdQuery;
     private lastMotdStatus;
     private _connectWait;
@@ -33,6 +34,7 @@ export declare class ServerConnection {
     connect(): void;
     /**
      * 断开与服务器的连接
+     * 注意：此方法仅在插件关闭时调用，会阻止后续所有重连尝试
      * @param silent 是否静默断开（不发送通知）
      */
     disconnect(silent?: boolean): void;
@@ -71,7 +73,8 @@ export declare class ServerConnection {
     private notifyGroups;
     /**
      * 安排重连任务
-     * 在连接断开后延迟一段时间重新连接
+     * 在连接断开或失败后延迟一段时间重新连接，使用简单的轮询机制
+     * 注意：此方法会无限重连，直到插件被销毁
      */
     private scheduleReconnect;
     /**

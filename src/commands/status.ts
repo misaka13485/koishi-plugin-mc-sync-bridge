@@ -41,10 +41,10 @@ export function apply(
             
             if (motdStatus.online) {
               // 在线：显示服务器名称、人数、服务器描述
-              let statusMessage = `服务器名称🟢： ${config.name}\n`
+              let statusMessage = `服务器名称： ${config.name}\n`
               
               if (motdStatus.players) {
-                statusMessage += `在线人数👥：  ${motdStatus.players.online}/${motdStatus.players.max}\n`
+                statusMessage += `在线玩家：  ${motdStatus.players.online}/${motdStatus.players.max}\n`
               }
               
               if (motdStatus.motd) {
@@ -79,15 +79,15 @@ export function apply(
               return statusMessage
             } else {
               // 离线
-              return `🔴 ${config.name} 已离线`
+              return `${config.name} 已离线`
             }
           } catch (error) {
             logger.error(`MOTD查询失败: ${error}`)
-            return `❓ ${config.name} 状态查询失败`
+            return `${config.name} 状态查询失败`
           }
         } else {
           // 未启用MOTD查询
-          return `⚙️ ${config.name} (MOTD查询未启用)`
+          return `${config.name} (MOTD查询未启用)`
         }
       } catch (error) {
         logger.error(`状态查询失败: ${error}`)

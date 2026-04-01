@@ -18,6 +18,7 @@ export class ServerConnection {
   private hasConnectedOnce: boolean = false
   private _disconnecting: boolean = false
   private _destroyed: boolean = false
+  private _disconnectedNotified: boolean = false
   private motdQuery: MOTDQuery
   private lastMotdStatus: ServerStatus | null = null
 
@@ -82,12 +83,10 @@ export class ServerConnection {
       if (this._destroyed) return
       this.ctx.logger('mc-bridge').info(`[${this.config.name}] 已连接`)
 
-      // 重连成功时发送通知（仅当非首次连接且不是主动断开）
-      if (this.hasConnectedOnce && !this._disconnecting) {
-        this.notifyGroups(`✅ 服务器 ${this.config.name} 已重新连接`)
-      } else {
-        this.hasConnectedOnce = true
-      }
+      // 连接成功时发送通知
+      this.notifyGroups(`服务器 ${this.config.name} 已连接`)
+      this.hasConnectedOnce = true
+      this._disconnectedNotified = false  // 重置掉线通知标志
 
       // 清理重连定时器
       if (this.reconnectTimer) {
@@ -114,17 +113,13 @@ export class ServerConnection {
       this.ctx.logger('mc-bridge').warn(`[${this.config.name}] 连接关闭: ${code} ${reason}`)
       this.ws = null
 
-      // 如果不是主动断开，且之前曾连接成功
-      if (!this._disconnecting && this.hasConnectedOnce) {
-        // 如果启用了MOTD查询，立即检查一次服务器状态
-        if (this.config.motd?.enabled) {
-          this.checkServerStatusOnce()
-        } else {
-          // 未启用MOTD查询，直接发送断开通知
-          this.notifyGroups(`❌ 服务器 ${this.config.name} 连接断开`)
-        }
+      // 如果之前曾连接成功，且未发送过掉线通知，则发送断开通知
+      if (this.hasConnectedOnce && !this._disconnectedNotified) {
+        this.notifyGroups(`服务器 ${this.config.name} 连接断开`)
+        this._disconnectedNotified = true  // 标记已发送通知
       }
 
+      // 总是尝试重连（除非插件已销毁）
       this.scheduleReconnect()
       // 重置主动断开标志，以便下次连接
       this._disconnecting = false
@@ -134,11 +129,15 @@ export class ServerConnection {
     this.ws.on('error', (err) => {
       if (this._destroyed) return
       this.ctx.logger('mc-bridge').error(`[${this.config.name}] 错误: ${err.message}`)
+      
+      // 连接错误时也安排重连
+      this.scheduleReconnect()
     })
   }
 
   /**
    * 断开与服务器的连接
+   * 注意：此方法仅在插件关闭时调用，会阻止后续所有重连尝试
    * @param silent 是否静默断开（不发送通知）
    */
   disconnect(silent: boolean = false) {
@@ -327,17 +326,27 @@ export class ServerConnection {
 
   /**
    * 安排重连任务
-   * 在连接断开后延迟一段时间重新连接
+   * 在连接断开或失败后延迟一段时间重新连接，使用简单的轮询机制
+   * 注意：此方法会无限重连，直到插件被销毁
    */
   private scheduleReconnect() {
     if (this._destroyed) return
-    if (this.reconnectTimer) return
+    
+    // 清理现有的重连定时器
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
+    
+    const delay = this.config.reconnectInterval
+    
+    this.ctx.logger('mc-bridge').info(`[${this.config.name}] 将在 ${delay}ms 后尝试重连...`)
     
     this.reconnectTimer = setTimeout(() => {
       if (this._destroyed) return
       this.ctx.logger('mc-bridge').info(`[${this.config.name}] 尝试重连...`)
       this.connect()
-    }, this.config.reconnectInterval)
+    }, delay)
   }
 
   /**
@@ -433,13 +442,13 @@ export class ServerConnection {
       } else {
         // 服务器离线
         this.ctx.logger('mc-bridge').warn(`[${this.config.name}] 服务器可能已宕机: ${status.error || '无法连接'}`)
-        this.notifyGroups(`💥 服务器 ${this.config.name} 可能已宕机: ${status.error || '无法连接'}`)
+        this.notifyGroups(`服务器 ${this.config.name} 可能已宕机: ${status.error || '无法连接'}`)
       }
       
     } catch (error) {
       this.ctx.logger('mc-bridge').error(`[${this.config.name}] MOTD查询失败: ${error.message}`)
       // MOTD查询失败也视为服务器离线
-      this.notifyGroups(`💥 服务器 ${this.config.name} 可能已宕机: ${error.message}`)
+      this.notifyGroups(`服务器 ${this.config.name} 可能已宕机: ${error.message}`)
     }
   }
 
