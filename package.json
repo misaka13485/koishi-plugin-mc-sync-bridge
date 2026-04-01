@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-mc-sync-bridge",
   "description": "QQ与Minecraft服务器管理插件，基于鹊桥v2实现双向消息转发，服务器状态查询，掉线提示等功能",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
